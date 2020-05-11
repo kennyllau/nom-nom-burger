@@ -8,17 +8,10 @@ import Modal from '../../components/UI/Modal/Modal';
 import OrderSummary from '../../components/Burger/OrderSummary/OrderSummary';
 import * as actionTypes from '../../store/actions';
 
-const INGREDIENT_PRICES = {
-    salad: 0.5,
-    cheese: 0.4,
-    meat: 1.3,
-    bacon: 0.7
-};
-
 class BurgerBuilder extends Component {
 
     state = {
-        totalPrice: 4,
+        loading: false,
         purchasable: false,
         purchasing: false
     };
@@ -35,42 +28,8 @@ class BurgerBuilder extends Component {
                 return sum + el;
             }, 0);
 
-        this.setState({purchasable: sum > 0});
+        return sum > 0;
     }
-
-    addIngredientHandler = (type) => {
-
-        // make a copy to update the state
-        const updatedIngredients = {...this.state.ingredients};
-        updatedIngredients[type] = this.state.ingredients[type] + 1;
-
-        const newPrice = this.state.totalPrice + INGREDIENT_PRICES[type];
-
-        this.setState({
-            ingredients: updatedIngredients,
-            totalPrice: newPrice
-        });
-
-        this.updatePurchaseState(updatedIngredients);
-    };
-
-    removeIngredientHandler = (type) => {
-
-        if (this.state.totalPrice === 4)
-            return;
-
-        const updatedIngredients = {...this.state.ingredients};
-        updatedIngredients[type] = this.state.ingredients[type] - 1;
-
-        const newPrice = this.state.totalPrice - INGREDIENT_PRICES[type];
-
-        this.setState({
-            ingredients: updatedIngredients,
-            totalPrice: newPrice
-        });
-
-        this.updatePurchaseState(updatedIngredients);
-    };
 
     getDisabledInfo = () => {
 
@@ -96,21 +55,17 @@ class BurgerBuilder extends Component {
     };
 
     purchaseContinueHandler = () => {
+        // const queryParams = [];
+        // for (let i in this.state.ingredients)
+        //     queryParams.push(encodeURIComponent(i) + '=' + encodeURIComponent(this.props.ings[i]));
+        // queryParams.push('price=' + this.state.totalPrice);
+        // const queryString = queryParams.join('&');
+        // this.props.history.push({
+        //     pathname: '/checkout',
+        //     search: '?' + queryString
+        // });
 
-        const queryParams = [];
-
-        for (let i in this.state.ingredients) {
-            queryParams.push(encodeURIComponent(i) + '=' + encodeURIComponent(this.props.ings[i]));
-        }
-
-        queryParams.push('price=' + this.state.totalPrice);
-        const queryString = queryParams.join('&');
-
-        // this.props.history.push("/checkout");
-        this.props.history.push({
-            pathname: '/checkout',
-            search: '?' + queryString
-        });
+        this.props.history.push("/checkout");
     };
 
     render() {
@@ -121,16 +76,16 @@ class BurgerBuilder extends Component {
             <Aux>
                 <Modal show={this.state.purchasing} modalClosed={this.purchaseCancelHandler}>
                    <OrderSummary
-                        price={this.state.totalPrice}
+                        price={this.props.price}
                         ingredients={this.props.ings}
                         purchaseCancelled={this.purchaseCancelHandler}
                         purchaseContinued={this.purchaseContinueHandler} />
                 </Modal>
                 <Burger ingredients={this.props.ings} />
                 <BuildControls
-                    price={this.state.totalPrice}
+                    price={this.props.price}
                     disabled={disabledInfo}
-                    purchasable={this.state.purchasable}
+                    purchasable={this.updatePurchaseState(this.props.ings)}
                     ingredientAdded={this.props.onIngredientAdded}
                     ingredientRemoved={this.props.onIngredientRemoved}
                     ordered={this.purchaseHandler}/>
@@ -141,7 +96,8 @@ class BurgerBuilder extends Component {
 
 const mapStateToProps = state => {
     return {
-        ings: state.ingredients
+        ings: state.ingredients,
+        price: state.totalPrice
     }
 };
 
